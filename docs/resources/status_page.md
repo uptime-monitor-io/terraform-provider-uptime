@@ -50,38 +50,38 @@ resource "uptime_status_page" "advanced_status" {
 
 # Example monitors to link to status page
 resource "uptime_monitor" "api_monitor" {
-  name     = "API Endpoint"
-  url      = "https://api.example.com/health"
-  interval = 60
-  type     = "HTTPS"
+  name           = "API Endpoint"
+  url            = "https://api.example.com/health"
+  check_interval = 60
+  type           = "https"
 }
 
 resource "uptime_monitor" "website_monitor" {
-  name     = "Main Website"
-  url      = "https://example.com"
-  interval = 300
-  type     = "HTTPS"
+  name           = "Main Website"
+  url            = "https://example.com"
+  check_interval = 300
+  type           = "https"
 }
 
 resource "uptime_monitor" "frontend" {
-  name     = "Customer Portal"
-  url      = "https://app.myapp.com"
-  interval = 60
-  type     = "HTTPS"
+  name           = "Customer Portal"
+  url            = "https://app.myapp.com"
+  check_interval = 60
+  type           = "https"
 }
 
 resource "uptime_monitor" "backend" {
-  name     = "API Service"
-  url      = "https://api.myapp.com/status"
-  interval = 60
-  type     = "HTTPS"
+  name           = "API Service"
+  url            = "https://api.myapp.com/status"
+  check_interval = 60
+  type           = "https"
 }
 
 resource "uptime_monitor" "database" {
-  name     = "Database Connection"
-  url      = "tcp://db.myapp.internal:5432"
-  interval = 60
-  type     = "TCP"
+  name           = "Database Connection"
+  url            = "tcp://db.myapp.internal:5432"
+  check_interval = 60
+  type           = "tcp"
 }
 ```
 
