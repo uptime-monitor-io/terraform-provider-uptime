@@ -117,7 +117,7 @@ validate-all: ## Run all validation checks including acceptance tests
 .PHONY: docs
 docs: ## Generate provider documentation
 	@if command -v tfplugindocs &> /dev/null; then \
-		tfplugindocs generate; \
+		tfplugindocs generate --provider-name uptime --rendered-provider-name "Uptime Monitor"; \
 		echo "${GREEN}✓${NC} Documentation generated"; \
 	else \
 		echo "${YELLOW}⚠${NC} tfplugindocs not installed. Install with:"; \
@@ -127,7 +127,7 @@ docs: ## Generate provider documentation
 .PHONY: docs-check
 docs-check: ## Check if documentation is up to date
 	@if command -v tfplugindocs &> /dev/null; then \
-		tfplugindocs generate; \
+		tfplugindocs generate --provider-name uptime --rendered-provider-name "Uptime Monitor"; \
 		if git diff --exit-code docs/; then \
 			echo "${GREEN}✓${NC} Documentation is up to date"; \
 		else \

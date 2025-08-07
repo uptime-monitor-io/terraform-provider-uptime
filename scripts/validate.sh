@@ -111,11 +111,11 @@ fi
 # 8. Check documentation with tfplugindocs if available
 if command -v tfplugindocs &> /dev/null; then
     print_step "Checking provider documentation..."
-    tfplugindocs generate
+    tfplugindocs generate --provider-name uptime --rendered-provider-name "Uptime Monitor"
     if git diff --exit-code docs/; then
         print_success "Documentation is up to date"
     else
-        print_error "Documentation needs updating. Run 'tfplugindocs generate'"
+        print_error "Documentation needs updating. Run 'make docs'"
         git checkout -- docs/
         FAILED=1
     fi
