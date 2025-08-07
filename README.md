@@ -123,6 +123,103 @@ resource "uptime_monitor" "server_ping" {
 }
 ```
 
+### Managing Contacts
+
+```hcl
+# Email contact
+resource "uptime_contact" "email_ops" {
+  name  = "Operations Team"
+  type  = "email"
+  email = "ops@example.com"
+}
+
+# Slack contact
+resource "uptime_contact" "slack_alerts" {
+  name = "Slack Alerts"
+  type = "slack"
+  
+  slack_settings {
+    webhook_url = "https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK"
+    channel     = "#monitoring"
+    username    = "Uptime Monitor"
+  }
+}
+
+# PagerDuty contact
+resource "uptime_contact" "pagerduty" {
+  name = "PagerDuty Integration"
+  type = "pagerduty"
+  
+  pagerduty_settings {
+    integration_key = "your-pagerduty-integration-key"
+  }
+}
+
+# Attach contacts to a monitor
+resource "uptime_monitor" "critical_api" {
+  name          = "Critical API"
+  url           = "https://api.example.com"
+  type          = "https"
+  check_interval = 30
+  
+  contact_ids = [
+    uptime_contact.email_ops.id,
+    uptime_contact.slack_alerts.id,
+    uptime_contact.pagerduty.id
+  ]
+}
+```
+
+### Creating Status Pages
+
+```hcl
+resource "uptime_status_page" "public_status" {
+  name        = "Service Status"
+  slug        = "status"
+  description = "Real-time status of our services"
+  
+  # Include specific monitors on the status page
+  monitor_ids = [
+    uptime_monitor.api_health.id,
+    uptime_monitor.critical_api.id
+  ]
+  
+  # Customize appearance
+  logo_url    = "https://example.com/logo.png"
+  favicon_url = "https://example.com/favicon.ico"
+  
+  # Custom domain (optional)
+  custom_domain = "status.example.com"
+}
+```
+
+### Using Data Sources
+
+```hcl
+# Get account information
+data "uptime_account" "current" {}
+
+output "monitor_usage" {
+  value = "${data.uptime_account.current.monitors_count}/${data.uptime_account.current.monitors_limit} monitors used"
+}
+
+# Look up an existing monitor
+data "uptime_monitor" "existing" {
+  id = "monitor-id-here"
+}
+
+# Reference existing monitor in other resources
+resource "uptime_status_page" "status" {
+  name = "Status Page"
+  monitor_ids = [data.uptime_monitor.existing.id]
+}
+
+# Look up an existing status page
+data "uptime_status_page" "existing" {
+  id = "status-page-id"
+}
+```
+
 ## Resource Reference
 
 ### `uptime_monitor`
