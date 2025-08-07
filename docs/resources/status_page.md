@@ -15,38 +15,37 @@ Status page resource for displaying monitor statuses publicly
 ```terraform
 # Basic status page example
 resource "uptime_status_page" "public_status" {
-  name             = "Public Status Page"
-  custom_domain    = "status.example.com"
-  company_name     = "Example Corp"
-  company_url      = "https://example.com"
-  contact_email    = "support@example.com"
-  company_logo_url = "https://example.com/logo.png"
-  timezone         = "America/New_York"
+  name = "Public Status Page"
   
-  # Link monitors to display on the status page
-  monitor_ids = [
+  # Link monitors to display on the status page (required, 1-20 monitors)
+  monitors = [
     uptime_monitor.api_monitor.id,
     uptime_monitor.website_monitor.id
   ]
+  
+  # Optional: Time period for uptime statistics (defaults to 7 days)
+  period = 30  # Can be 7, 30, or 90 days
 }
 
-# Status page with custom branding
+# Status page with custom domain and authentication
 resource "uptime_status_page" "branded_status" {
-  name               = "Customer Portal Status"
-  custom_domain      = "status.myapp.com"
-  company_name       = "MyApp Inc"
-  company_url        = "https://myapp.com"
-  contact_email      = "ops@myapp.com"
-  company_logo_url   = "https://cdn.myapp.com/assets/logo.svg"
-  timezone           = "UTC"
-  hide_powered_by    = true
-  allow_search_index = false
+  name          = "Customer Portal Status"
+  custom_domain = "status.myapp.com"
   
-  monitor_ids = [
+  monitors = [
     uptime_monitor.frontend.id,
     uptime_monitor.backend.id,
     uptime_monitor.database.id
   ]
+  
+  # Optional: Show incident reasons publicly
+  show_incident_reasons = true
+  
+  # Optional: Protect with basic authentication
+  basic_auth = "admin:SecurePassword123"  # username:password format
+  
+  # Optional: Use 90-day uptime period
+  period = 90
 }
 
 # Example monitors to link to status page

@@ -19,16 +19,28 @@ data "uptime_status_page" "example" {
 }
 
 # Use the status page data
+output "status_page_name" {
+  value = data.uptime_status_page.example.name
+}
+
 output "status_page_url" {
+  value = data.uptime_status_page.example.url
+}
+
+output "status_page_custom_domain" {
   value = data.uptime_status_page.example.custom_domain
 }
 
 output "status_page_monitors" {
-  value = data.uptime_status_page.example.monitor_ids
+  value = data.uptime_status_page.example.monitors
 }
 
-output "company_name" {
-  value = data.uptime_status_page.example.company_name
+output "status_page_period" {
+  value = data.uptime_status_page.example.period
+}
+
+output "show_incident_reasons" {
+  value = data.uptime_status_page.example.show_incident_reasons
 }
 ```
 
