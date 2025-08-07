@@ -13,8 +13,8 @@ resource "uptime_status_page" "public_status" {
 }
 
 # Status page with custom domain and authentication
-resource "uptime_status_page" "branded_status" {
-  name          = "Customer Portal Status"
+resource "uptime_status_page" "advanced_status" {
+  name          = "Service Health Dashboard"
   custom_domain = "status.myapp.com"
   
   monitors = [
