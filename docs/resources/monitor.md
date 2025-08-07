@@ -8,138 +8,18 @@ description: |-
 
 # uptime_monitor (Resource)
 
-Uptime monitor resource for monitoring HTTP/HTTPS, TCP, and Ping endpoints. This resource allows you to create and manage monitors that check the availability and performance of your services from multiple geographic regions.
+Uptime monitor resource for monitoring HTTP/HTTPS, TCP, and Ping endpoints.
 
 ## Example Usage
 
-### Basic HTTPS Monitor
-
 ```terraform
-resource "uptime_monitor" "website" {
-  name           = "Company Website"
-  url            = "https://www.example.com"
+resource "uptime_monitor" "example" {
+  name           = "Example Website"
+  url            = "https://example.com"
   type           = "https"
   check_interval = 60
   timeout        = 30
   regions        = ["us-east-1", "eu-west-1"]
-}
-```
-
-### Advanced HTTPS Monitor with Response Validation
-
-```terraform
-resource "uptime_monitor" "api_endpoint" {
-  name           = "API Health Check"
-  url            = "https://api.example.com/health"
-  type           = "https"
-  check_interval = 60
-  timeout        = 10
-  regions        = ["us-east-1", "eu-west-1", "ap-southeast-1"]
-  fail_threshold = 2
-  
-  https_settings = {
-    method                       = "post"
-    expected_status_codes        = "200,201"
-    check_certificate_expiration = true
-    follow_redirects             = false
-    
-    request_headers = {
-      "Authorization" = "Bearer ${var.api_token}"
-      "Content-Type"  = "application/json"
-      "X-API-Version" = "v2"
-    }
-    
-    request_body = jsonencode({
-      check = "health"
-      deep  = true
-    })
-    
-    expected_response_body = "\"status\":\"healthy\""
-    
-    expected_response_headers = {
-      "X-API-Version" = "v2"
-      "Content-Type"  = "application/json"
-    }
-  }
-  
-  contacts = [
-    uptime_contact.oncall.id,
-    uptime_contact.devops.id
-  ]
-}
-```
-
-### TCP Monitor for Database
-
-```terraform
-resource "uptime_monitor" "postgres" {
-  name           = "PostgreSQL Database"
-  url            = "db.example.com:5432"
-  type           = "tcp"
-  check_interval = 300  # Check every 5 minutes
-  timeout        = 5
-  regions        = ["us-east-1"]
-  fail_threshold = 3
-  
-  contacts = [uptime_contact.dba_team.id]
-}
-```
-
-### TCP Monitor for Redis
-
-```terraform
-resource "uptime_monitor" "redis" {
-  name           = "Redis Cache"
-  url            = "redis.example.com:6379"
-  type           = "tcp"
-  check_interval = 120
-  timeout        = 3
-  regions        = ["us-east-1", "us-west-2"]
-  
-  tcp_settings = {
-    # TCP settings if any are available
-  }
-}
-```
-
-### Ping Monitor
-
-```terraform
-resource "uptime_monitor" "network_device" {
-  name           = "Network Gateway"
-  url            = "192.168.1.1"  # Provider will add ping:// automatically
-  type           = "ping"
-  check_interval = 60
-  timeout        = 5
-  regions        = ["us-east-1"]
-  
-  ping_settings = {
-    # Ping settings if any are available
-  }
-}
-```
-
-### Multi-Region Monitor with Fail Threshold
-
-```terraform
-resource "uptime_monitor" "global_service" {
-  name           = "Global Service"
-  url            = "https://global.example.com"
-  type           = "https"
-  check_interval = 60
-  timeout        = 30
-  
-  # Monitor from 5 regions
-  regions = [
-    "us-east-1",
-    "us-west-2", 
-    "eu-west-1",
-    "ap-southeast-1",
-    "ap-northeast-1"
-  ]
-  
-  # Alert only if 3 or more regions report failure
-  fail_threshold = 3
   
   https_settings = {
     method                       = "get"
@@ -149,112 +29,6 @@ resource "uptime_monitor" "global_service" {
   }
 }
 ```
-
-### Dynamic Monitor Creation
-
-```terraform
-variable "services" {
-  type = map(object({
-    url            = string
-    type           = string
-    check_interval = number
-    timeout        = number
-    regions        = list(string)
-  }))
-  
-  default = {
-    website = {
-      url            = "https://www.example.com"
-      type           = "https"
-      check_interval = 60
-      timeout        = 30
-      regions        = ["us-east-1", "eu-west-1"]
-    }
-    api = {
-      url            = "https://api.example.com/health"
-      type           = "https"  
-      check_interval = 30
-      timeout        = 10
-      regions        = ["us-east-1", "us-west-2", "eu-west-1"]
-    }
-    database = {
-      url            = "db.example.com:5432"
-      type           = "tcp"
-      check_interval = 300
-      timeout        = 5
-      regions        = ["us-east-1"]
-    }
-  }
-}
-
-resource "uptime_monitor" "services" {
-  for_each = var.services
-  
-  name           = "Production ${title(each.key)}"
-  url            = each.value.url
-  type           = each.value.type
-  check_interval = each.value.check_interval
-  timeout        = each.value.timeout
-  regions        = each.value.regions
-  
-  dynamic "https_settings" {
-    for_each = each.value.type == "https" ? [1] : []
-    content {
-      method                       = "get"
-      expected_status_codes        = "200"
-      check_certificate_expiration = true
-      follow_redirects             = true
-    }
-  }
-}
-```
-
-### Monitoring with Notification Contacts
-
-```terraform
-# Create contacts first
-resource "uptime_contact" "oncall" {
-  name  = "On-Call Team"
-  email = "oncall@example.com"
-}
-
-resource "uptime_contact" "escalation" {
-  name  = "Escalation Team"
-  email = "escalation@example.com"
-}
-
-# Create monitor with contacts
-resource "uptime_monitor" "critical_service" {
-  name           = "Critical Payment Service"
-  url            = "https://payments.example.com/health"
-  type           = "https"
-  check_interval = 30
-  timeout        = 10
-  regions        = ["us-east-1", "us-west-2", "eu-west-1"]
-  fail_threshold = 2
-  
-  https_settings = {
-    method                = "get"
-    expected_status_codes = "200"
-  }
-  
-  # Notify both teams on failure
-  contacts = [
-    uptime_contact.oncall.id,
-    uptime_contact.escalation.id
-  ]
-}
-```
-
-## Import
-
-Existing monitors can be imported using their ID:
-
-```bash
-terraform import uptime_monitor.example monitor-id-12345
-```
-
-To find the monitor ID, you can use the Uptime Monitor API or web interface.
 
 <!-- schema generated by tfplugindocs -->
 ## Schema
@@ -268,16 +42,16 @@ To find the monitor ID, you can use the Uptime Monitor API or web interface.
 ### Optional
 
 - `active` (Boolean) Whether the monitor is active and should perform checks
-- `check_interval` (Number) Check interval in seconds (minimum: 30, maximum: 86400)
+- `check_interval` (Number) Check interval in seconds
 - `contacts` (List of String) List of contact IDs to notify when monitor status changes
 - `fail_threshold` (Number) Number of consecutive failed checks before marking monitor as down. Must not exceed the number of regions.
 - `host` (String) Host for certificate expiration monitoring (extracted from URL)
 - `https_settings` (Attributes) HTTPS-specific configuration (only applicable when type is 'https') (see [below for nested schema](#nestedatt--https_settings))
 - `ping_settings` (Attributes) Ping-specific configuration (only applicable when type is 'ping') (see [below for nested schema](#nestedatt--ping_settings))
 - `port` (Number) Port for certificate expiration monitoring (extracted from URL)
-- `regions` (List of String) List of regions to perform checks from. Available regions: us-east-1, us-west-1, us-west-2, eu-west-1, eu-central-1, ap-southeast-1, ap-northeast-1, ap-south-1, sa-east-1
+- `regions` (List of String) List of regions to perform checks from
 - `tcp_settings` (Attributes) TCP-specific configuration (only applicable when type is 'tcp') (see [below for nested schema](#nestedatt--tcp_settings))
-- `timeout` (Number) Request timeout in seconds (minimum: 1, maximum: 60)
+- `timeout` (Number) Request timeout in seconds
 
 ### Read-Only
 
@@ -288,12 +62,12 @@ To find the monitor ID, you can use the Uptime Monitor API or web interface.
 
 Optional:
 
-- `check_certificate_expiration` (Boolean) Whether to check SSL certificate expiration (default: true)
+- `check_certificate_expiration` (Boolean) Whether to check SSL certificate expiration
 - `expected_response_body` (String) Expected substring in the response body
 - `expected_response_headers` (Map of String) Expected HTTP response headers
 - `expected_status_codes` (String) Expected HTTP status codes (e.g., '200', '200-299', '200,201,301')
-- `follow_redirects` (Boolean) Whether to follow HTTP redirects (default: true)
-- `method` (String) HTTP method to use (HEAD, GET, POST, PUT, DELETE, PATCH, OPTIONS)
+- `follow_redirects` (Boolean) Whether to follow HTTP redirects
+- `method` (String) HTTP method to use (HEAD, GET, POST, PUT, etc.)
 - `request_body` (String) HTTP request body (for POST/PUT requests)
 - `request_headers` (Map of String) HTTP headers to send with the request
 
@@ -301,17 +75,6 @@ Optional:
 <a id="nestedatt--ping_settings"></a>
 ### Nested Schema for `ping_settings`
 
-Currently, ping settings do not have additional configuration options.
 
 <a id="nestedatt--tcp_settings"></a>
 ### Nested Schema for `tcp_settings`
-
-Currently, TCP settings do not have additional configuration options.
-
-## Timeouts
-
-This resource supports the following timeouts:
-
-- `create` - Default: 2 minutes
-- `update` - Default: 2 minutes
-- `delete` - Default: 2 minutes
