@@ -92,7 +92,7 @@ jobs:
           go build -v -o terraform-provider-uptime_${{ matrix.os }}_${{ matrix.arch }}
       
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: terraform-provider-uptime_${{ matrix.os }}_${{ matrix.arch }}
           path: terraform-provider-uptime_${{ matrix.os }}_${{ matrix.arch }}
