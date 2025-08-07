@@ -58,8 +58,8 @@ jobs:
         run: |
           echo "Provider release created. Manual steps required for Terraform Registry publishing."
 
-  publish-docs:
-    name: Publish Documentation
+  generate-docs:
+    name: Generate Documentation
     runs-on: ubuntu-latest
     needs: release
     steps:
@@ -77,14 +77,11 @@ jobs:
       - name: Generate documentation
         run: tfplugindocs generate
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: './docs'
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Verify documentation
+        run: |
+          if [ ! -d "docs" ]; then
+            echo "Documentation directory not found"
+            exit 1
+          fi
+          echo "Documentation generated successfully"
+          ls -la docs/
