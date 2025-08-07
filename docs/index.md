@@ -1,10 +1,10 @@
 ---
-page_title: "uptime Provider"
+page_title: "Uptime Monitor Provider"
 description: |-
   The Uptime Monitor provider allows you to manage monitors, contacts, and status pages for the Uptime Monitor service.
 ---
 
-# uptime Provider
+# Uptime Monitor Provider
 
 The Uptime Monitor provider allows you to manage monitors, contacts, and status pages for the Uptime Monitor service.
 
