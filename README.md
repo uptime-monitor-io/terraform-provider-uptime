@@ -220,6 +220,136 @@ data "uptime_status_page" "existing" {
 }
 ```
 
+### Complete Example: Production Setup
+
+```hcl
+# Configure the provider
+terraform {
+  required_providers {
+    uptime = {
+      source  = "uptime-monitor/uptime"
+      version = "~> 1.0"
+    }
+  }
+}
+
+provider "uptime" {
+  # API key from environment variable UPTIME_API_KEY
+}
+
+# Define notification contacts
+resource "uptime_contact" "ops_email" {
+  name  = "Operations Team"
+  type  = "email"
+  email = "ops@company.com"
+}
+
+resource "uptime_contact" "oncall_pagerduty" {
+  name = "On-Call PagerDuty"
+  type = "pagerduty"
+  
+  pagerduty_settings {
+    integration_key = var.pagerduty_key
+  }
+}
+
+resource "uptime_contact" "alerts_slack" {
+  name = "Alerts Channel"
+  type = "slack"
+  
+  slack_settings {
+    webhook_url = var.slack_webhook
+    channel     = "#alerts"
+  }
+}
+
+# Define monitors for different services
+resource "uptime_monitor" "api" {
+  name           = "Production API"
+  url            = "https://api.company.com/health"
+  type           = "https"
+  check_interval = 60
+  timeout        = 10
+  regions        = ["us-east", "eu-west", "ap-southeast"]
+  
+  https_settings {
+    method                = "GET"
+    expected_status_codes = "200"
+    expected_response_body = "healthy"
+    check_certificate_expiration = true
+    certificate_expiration_days  = 30
+  }
+  
+  # Critical service - notify all channels
+  contact_ids = [
+    uptime_contact.ops_email.id,
+    uptime_contact.oncall_pagerduty.id,
+    uptime_contact.alerts_slack.id
+  ]
+}
+
+resource "uptime_monitor" "database" {
+  name           = "Production Database"
+  url            = "tcp://db.internal:5432"
+  type           = "tcp"
+  check_interval = 120
+  timeout        = 5
+  regions        = ["us-east"]
+  
+  # Database is internal - only notify ops
+  contact_ids = [uptime_contact.ops_email.id]
+}
+
+resource "uptime_monitor" "website" {
+  name           = "Company Website"
+  url            = "https://www.company.com"
+  type           = "https"
+  check_interval = 300
+  timeout        = 30
+  regions        = ["us-east", "eu-west"]
+  
+  https_settings {
+    follow_redirects = true
+    expected_status_codes = "200,301"
+  }
+  
+  # Public facing - notify slack
+  contact_ids = [uptime_contact.alerts_slack.id]
+}
+
+# Create a public status page
+resource "uptime_status_page" "public" {
+  name        = "Company Status"
+  slug        = "status"
+  description = "Real-time status of Company services"
+  
+  monitor_ids = [
+    uptime_monitor.api.id,
+    uptime_monitor.website.id
+    # Note: database monitor excluded (internal only)
+  ]
+  
+  logo_url      = "https://cdn.company.com/logo.png"
+  favicon_url   = "https://cdn.company.com/favicon.ico"
+  custom_domain = "status.company.com"
+  theme         = "light"
+  show_history  = true
+}
+
+# Output important information
+output "status_page_url" {
+  value = uptime_status_page.public.public_url
+}
+
+output "monitor_count" {
+  value = length([
+    uptime_monitor.api.id,
+    uptime_monitor.database.id,
+    uptime_monitor.website.id
+  ])
+}
+```
+
 ## Resource Reference
 
 ### `uptime_monitor`
@@ -249,6 +379,53 @@ When `type = "https"`, you can configure additional HTTPS-specific options:
 #### Attributes
 
 - `id` (String) - Monitor identifier
+- `status` (String) - Current monitor status (up/down/paused)
+- `created_at` (String) - Creation timestamp
+- `updated_at` (String) - Last update timestamp
+
+### `uptime_contact`
+
+#### Arguments
+
+- `name` (String, Required) - Display name for the contact
+- `type` (String, Required) - Contact type: "email", "sms", "slack", "discord", "pagerduty", "webhook", etc.
+- `email` (String, Optional) - Email address (required for email type)
+- `phone` (String, Optional) - Phone number (required for SMS type)
+- `slack_settings` (Block, Optional) - Slack configuration
+  - `webhook_url` (String, Required) - Slack webhook URL
+  - `channel` (String, Optional) - Target channel
+  - `username` (String, Optional) - Bot username
+- `discord_settings` (Block, Optional) - Discord configuration
+  - `webhook_url` (String, Required) - Discord webhook URL
+- `pagerduty_settings` (Block, Optional) - PagerDuty configuration
+  - `integration_key` (String, Required) - PagerDuty integration key
+- `webhook_settings` (Block, Optional) - Custom webhook configuration
+  - `url` (String, Required) - Webhook endpoint URL
+  - `method` (String, Optional) - HTTP method (default: POST)
+  - `headers` (Map of String, Optional) - Custom headers
+
+#### Attributes
+
+- `id` (String) - Contact identifier
+
+### `uptime_status_page`
+
+#### Arguments
+
+- `name` (String, Required) - Display name for the status page
+- `slug` (String, Required) - URL slug for the status page
+- `description` (String, Optional) - Page description
+- `monitor_ids` (List of String, Optional) - Monitor IDs to display on the page
+- `logo_url` (String, Optional) - URL to logo image
+- `favicon_url` (String, Optional) - URL to favicon
+- `custom_domain` (String, Optional) - Custom domain for the status page
+- `theme` (String, Optional) - Color theme (light/dark)
+- `show_history` (Boolean, Optional) - Show incident history (default: true)
+
+#### Attributes
+
+- `id` (String) - Status page identifier
+- `public_url` (String) - Public URL of the status page
 
 ## Development
 
@@ -297,13 +474,31 @@ The provider is structured as follows:
 
 ## API Integration
 
-This provider interfaces with your existing Uptime Monitor API endpoints:
+This provider interfaces with the Uptime Monitor API endpoints:
 
+### Monitor Endpoints
 - `POST /api/monitors` - Create monitor
-- `GET /api/monitors/{id}` - Get monitor
+- `GET /api/monitors/{id}` - Get monitor details
 - `PUT /api/monitors/{id}` - Update monitor
 - `DELETE /api/monitors/{id}` - Delete monitor
-- `GET /api/monitors` - List monitors
+- `GET /api/monitors` - List all monitors
+
+### Contact Endpoints
+- `POST /api/contacts` - Create contact
+- `GET /api/contacts/{id}` - Get contact details
+- `PUT /api/contacts/{id}` - Update contact
+- `DELETE /api/contacts/{id}` - Delete contact
+- `GET /api/contacts` - List all contacts
+
+### Status Page Endpoints
+- `POST /api/status_pages` - Create status page
+- `GET /api/status_pages/{id}` - Get status page details
+- `PUT /api/status_pages/{id}` - Update status page
+- `DELETE /api/status_pages/{id}` - Delete status page
+- `GET /api/status_pages` - List all status pages
+
+### Account Endpoints
+- `GET /api/account` - Get account information
 
 Authentication is handled via Bearer token in the Authorization header.
 
