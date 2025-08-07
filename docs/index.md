@@ -7,15 +7,26 @@ description: |-
 
 # uptime Provider
 
-The Uptime Monitor provider allows you to manage monitors, contacts, and status pages for the Uptime Monitor service.
+The Uptime Monitor provider allows you to manage monitors, contacts, and status pages for the Uptime Monitor service. This provider enables you to define your monitoring infrastructure as code, making it easy to version control, review, and replicate your monitoring setup.
+
+## Key Features
+
+- **Monitor Management**: Create and manage HTTPS, TCP, and Ping monitors
+- **Contact Management**: Configure notification contacts for alerts
+- **Status Pages**: Set up public status pages for your services
+- **Infrastructure as Code**: Version control your monitoring configuration
+- **Bulk Operations**: Easily replicate monitoring across environments
 
 ## Example Usage
+
+### Basic Configuration
 
 ```terraform
 terraform {
   required_providers {
     uptime = {
-      source = "registry.terraform.io/uptime-monitor-io/uptime"
+      source  = "uptime-monitor-io/uptime"
+      version = "~> 0.0.3"
     }
   }
 }
@@ -27,13 +38,197 @@ provider "uptime" {
   # export UPTIME_API_KEY="your-api-key"
   # export UPTIME_BASE_URL="https://api.uptime-monitor.io" (optional)
 }
+```
 
-# Or configure explicitly
+### Complete Example with All Resources
+
+```terraform
+# Configure the provider
 provider "uptime" {
-  api_key  = "your-api-key"
-  base_url = "https://api.uptime-monitor.io" # Optional, defaults to production API
+  api_key = var.uptime_api_key
+}
+
+# Create a contact for notifications
+resource "uptime_contact" "devops_team" {
+  name  = "DevOps Team"
+  email = "devops@example.com"
+}
+
+# Create an HTTPS monitor for your website
+resource "uptime_monitor" "website" {
+  name           = "Production Website"
+  url            = "https://example.com"
+  type           = "https"
+  check_interval = 60
+  timeout        = 30
+  regions        = ["us-east-1", "eu-west-1", "ap-southeast-1"]
+  
+  https_settings = {
+    method                       = "get"
+    expected_status_codes        = "200,301"
+    check_certificate_expiration = true
+    follow_redirects             = true
+    request_headers = {
+      "User-Agent" = "UptimeMonitor/1.0"
+    }
+  }
+  
+  # Associate contact for alerts
+  contact_ids = [uptime_contact.devops_team.id]
+}
+
+# Create a TCP monitor for database
+resource "uptime_monitor" "database" {
+  name           = "PostgreSQL Database"
+  url            = "db.example.com:5432"
+  type           = "tcp"
+  check_interval = 300
+  timeout        = 10
+  regions        = ["us-east-1"]
+  
+  contact_ids = [uptime_contact.devops_team.id]
+}
+
+# Create a status page
+resource "uptime_status_page" "public" {
+  name        = "Service Status"
+  slug        = "status"
+  description = "Real-time status of our services"
+  
+  monitor_ids = [
+    uptime_monitor.website.id,
+    uptime_monitor.database.id
+  ]
 }
 ```
+
+### Multi-Environment Setup
+
+```terraform
+# variables.tf
+variable "environment" {
+  description = "Environment name (staging, production)"
+  type        = string
+}
+
+variable "monitors" {
+  description = "Map of monitors to create"
+  type = map(object({
+    url            = string
+    type           = string
+    check_interval = number
+    regions        = list(string)
+  }))
+}
+
+# main.tf
+resource "uptime_monitor" "services" {
+  for_each = var.monitors
+  
+  name           = "${var.environment}-${each.key}"
+  url            = each.value.url
+  type           = each.value.type
+  check_interval = each.value.check_interval
+  regions        = each.value.regions
+  timeout        = 30
+  
+  dynamic "https_settings" {
+    for_each = each.value.type == "https" ? [1] : []
+    content {
+      method                       = "get"
+      expected_status_codes        = "200"
+      check_certificate_expiration = true
+      follow_redirects             = true
+    }
+  }
+}
+
+# terraform.tfvars
+environment = "production"
+monitors = {
+  api = {
+    url            = "https://api.example.com/health"
+    type           = "https"
+    check_interval = 60
+    regions        = ["us-east-1", "eu-west-1"]
+  }
+  website = {
+    url            = "https://www.example.com"
+    type           = "https"
+    check_interval = 300
+    regions        = ["us-east-1", "eu-west-1", "ap-southeast-1"]
+  }
+  database = {
+    url            = "db.example.com:5432"
+    type           = "tcp"
+    check_interval = 300
+    regions        = ["us-east-1"]
+  }
+}
+```
+
+### Import Existing Resources
+
+```terraform
+# Import an existing monitor
+# terraform import uptime_monitor.example monitor-id-123
+
+resource "uptime_monitor" "example" {
+  name           = "Imported Monitor"
+  url            = "https://example.com"
+  type           = "https"
+  check_interval = 60
+  timeout        = 30
+  regions        = ["us-east-1"]
+}
+
+# Import an existing contact
+# terraform import uptime_contact.team contact-id-456
+
+resource "uptime_contact" "team" {
+  name  = "Team Contact"
+  email = "team@example.com"
+}
+```
+
+## Authentication
+
+The provider supports two authentication methods:
+
+### Environment Variables (Recommended)
+
+```bash
+export UPTIME_API_KEY="your-api-key-here"
+export UPTIME_BASE_URL="https://api.uptime-monitor.io"  # Optional
+```
+
+### Provider Configuration
+
+```terraform
+provider "uptime" {
+  api_key  = "your-api-key-here"
+  base_url = "https://api.uptime-monitor.io"  # Optional
+}
+```
+
+### Using Terraform Variables
+
+```terraform
+variable "uptime_api_key" {
+  description = "Uptime Monitor API Key"
+  type        = string
+  sensitive   = true
+}
+
+provider "uptime" {
+  api_key = var.uptime_api_key
+}
+```
+
+Then provide the value via:
+- Command line: `terraform apply -var="uptime_api_key=your-key"`
+- Environment variable: `export TF_VAR_uptime_api_key="your-key"`
+- terraform.tfvars file (don't commit to version control)
 
 <!-- schema generated by tfplugindocs -->
 ## Schema
@@ -42,3 +237,28 @@ provider "uptime" {
 
 - `api_key` (String, Sensitive) API key for authenticating with the Uptime Monitor service. Can also be set via the UPTIME_API_KEY environment variable.
 - `base_url` (String) Base URL for the Uptime Monitor API. Defaults to production API. Can also be set via the UPTIME_BASE_URL environment variable.
+
+## Resources and Data Sources
+
+### Resources
+- [uptime_monitor](resources/monitor.md) - Manage uptime monitors
+- [uptime_contact](resources/contact.md) - Manage notification contacts
+- [uptime_status_page](resources/status_page.md) - Manage public status pages
+
+### Data Sources
+- [uptime_monitor](data-sources/monitor.md) - Read existing monitor information
+- [uptime_contact](data-sources/contact.md) - Read existing contact information
+- [uptime_account](data-sources/account.md) - Read account information
+
+## Getting Started
+
+1. [Sign up](https://uptime-monitor.io) for an Uptime Monitor account
+2. Generate an API key from your account settings
+3. Configure the provider with your API key
+4. Start defining your monitors in Terraform
+
+## Support
+
+- [GitHub Issues](https://github.com/uptime-monitor-io/terraform-provider-uptime/issues)
+- [Provider Documentation](https://registry.terraform.io/providers/uptime-monitor-io/uptime/latest/docs)
+- [Uptime Monitor API Documentation](https://uptime-monitor.io/docs/api)
