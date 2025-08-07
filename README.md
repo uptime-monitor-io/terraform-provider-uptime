@@ -2,8 +2,6 @@
 
 [![CI](https://github.com/codematters-llc/uptime-monitor-io-terraform-provider/actions/workflows/ci.yml/badge.svg)](https://github.com/codematters-llc/uptime-monitor-io-terraform-provider/actions/workflows/ci.yml)
 [![Release](https://github.com/codematters-llc/uptime-monitor-io-terraform-provider/actions/workflows/release.yml/badge.svg)](https://github.com/codematters-llc/uptime-monitor-io-terraform-provider/actions/workflows/release.yml)
-[![Documentation](https://github.com/codematters-llc/uptime-monitor-io-terraform-provider/actions/workflows/docs.yml/badge.svg)](https://github.com/codematters-llc/uptime-monitor-io-terraform-provider/actions/workflows/docs.yml)
-[![Go Report Card](https://goreportcard.com/badge/github.com/codematters-llc/uptime-monitor-io-terraform-provider)](https://goreportcard.com/report/github.com/codematters-llc/uptime-monitor-io-terraform-provider)
 [![License](https://img.shields.io/github/license/codematters-llc/uptime-monitor-io-terraform-provider)](https://github.com/codematters-llc/uptime-monitor-io-terraform-provider/blob/main/LICENSE)
 
 A Terraform provider for managing uptime monitors through the Uptime Monitor API.
@@ -11,9 +9,12 @@ A Terraform provider for managing uptime monitors through the Uptime Monitor API
 ## Features
 
 - **Monitor Management**: Create, update, and delete HTTP/HTTPS, TCP, and Ping monitors
+- **Contact Management**: Configure notification contacts with email, SMS, Slack, Discord, PagerDuty, and more
+- **Status Pages**: Create public status pages to share monitor status with customers
 - **Advanced HTTPS Configuration**: Support for custom headers, body validation, certificate checking, and status code expectations
 - **Multi-region Support**: Deploy monitors across multiple geographic regions
-- **Terraform Integration**: Full lifecycle management with proper state handling
+- **Data Sources**: Query existing monitors, contacts, status pages, and account information
+- **Terraform Integration**: Full lifecycle management with proper state handling and import support
 
 ## Installation
 
@@ -157,7 +158,7 @@ When `type = "https"`, you can configure additional HTTPS-specific options:
 ### Requirements
 
 - Go 1.24+
-- Terraform 1.0+
+- Terraform 1.5.7+
 
 ### Building
 
