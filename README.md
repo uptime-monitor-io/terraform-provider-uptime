@@ -162,7 +162,7 @@ resource "uptime_monitor" "critical_api" {
   type          = "https"
   check_interval = 30
   
-  contact_ids = [
+  contacts = [
     uptime_contact.email_ops.id,
     uptime_contact.slack_alerts.id,
     uptime_contact.pagerduty.id
@@ -281,7 +281,7 @@ resource "uptime_monitor" "api" {
   }
   
   # Critical service - notify all channels
-  contact_ids = [
+  contacts = [
     uptime_contact.ops_email.id,
     uptime_contact.oncall_pagerduty.id,
     uptime_contact.alerts_slack.id
@@ -297,7 +297,7 @@ resource "uptime_monitor" "database" {
   regions        = ["us-east"]
   
   # Database is internal - only notify ops
-  contact_ids = [uptime_contact.ops_email.id]
+  contacts = [uptime_contact.ops_email.id]
 }
 
 resource "uptime_monitor" "website" {
@@ -314,7 +314,7 @@ resource "uptime_monitor" "website" {
   }
   
   # Public facing - notify slack
-  contact_ids = [uptime_contact.alerts_slack.id]
+  contacts = [uptime_contact.alerts_slack.id]
 }
 
 # Create a public status page
