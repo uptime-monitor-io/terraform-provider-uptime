@@ -174,22 +174,22 @@ resource "uptime_monitor" "critical_api" {
 
 ```hcl
 resource "uptime_status_page" "public_status" {
-  name        = "Service Status"
-  slug        = "status"
-  description = "Real-time status of our services"
+  name = "Service Status"
   
   # Include specific monitors on the status page
-  monitor_ids = [
+  monitors = [
     uptime_monitor.api_health.id,
     uptime_monitor.critical_api.id
   ]
   
-  # Customize appearance
-  logo_url    = "https://example.com/logo.png"
-  favicon_url = "https://example.com/favicon.ico"
+  # Period for showing history in days
+  period = 30
   
   # Custom domain (optional)
   custom_domain = "status.example.com"
+  
+  # Show incident reasons on the status page
+  show_incident_reasons = true
 }
 ```
 
@@ -211,7 +211,7 @@ data "uptime_monitor" "existing" {
 # Reference existing monitor in other resources
 resource "uptime_status_page" "status" {
   name = "Status Page"
-  monitor_ids = [data.uptime_monitor.existing.id]
+  monitors = [data.uptime_monitor.existing.id]
 }
 
 # Look up an existing status page
@@ -277,7 +277,6 @@ resource "uptime_monitor" "api" {
     expected_status_codes = "200"
     expected_response_body = "healthy"
     check_certificate_expiration = true
-    certificate_expiration_days  = 30
   }
   
   # Critical service - notify all channels
@@ -319,26 +318,22 @@ resource "uptime_monitor" "website" {
 
 # Create a public status page
 resource "uptime_status_page" "public" {
-  name        = "Company Status"
-  slug        = "status"
-  description = "Real-time status of Company services"
+  name = "Company Status"
   
-  monitor_ids = [
+  monitors = [
     uptime_monitor.api.id,
     uptime_monitor.website.id
     # Note: database monitor excluded (internal only)
   ]
   
-  logo_url      = "https://cdn.company.com/logo.png"
-  favicon_url   = "https://cdn.company.com/favicon.ico"
+  period = 30
   custom_domain = "status.company.com"
-  theme         = "light"
-  show_history  = true
+  show_incident_reasons = true
 }
 
 # Output important information
 output "status_page_url" {
-  value = uptime_status_page.public.public_url
+  value = uptime_status_page.public.url
 }
 
 output "monitor_count" {
@@ -413,19 +408,17 @@ When `type = "https"`, you can configure additional HTTPS-specific options:
 #### Arguments
 
 - `name` (String, Required) - Display name for the status page
-- `slug` (String, Required) - URL slug for the status page
-- `description` (String, Optional) - Page description
-- `monitor_ids` (List of String, Optional) - Monitor IDs to display on the page
-- `logo_url` (String, Optional) - URL to logo image
-- `favicon_url` (String, Optional) - URL to favicon
+- `monitors` (List of String, Required) - List of monitor IDs to display on the page (1-20 monitors)
+- `period` (Number, Optional) - Number of days to show history for (default: 30)
 - `custom_domain` (String, Optional) - Custom domain for the status page
-- `theme` (String, Optional) - Color theme (light/dark)
-- `show_history` (Boolean, Optional) - Show incident history (default: true)
+- `show_incident_reasons` (Boolean, Optional) - Whether to show detailed incident reasons on the status page
+- `basic_auth` (String, Optional) - Basic authentication in format "username:password" to protect the status page
 
 #### Attributes
 
 - `id` (String) - Status page identifier
-- `public_url` (String) - Public URL of the status page
+- `url` (String) - Public URL of the status page
+- `created_at` (Number) - Unix timestamp of when the status page was created
 
 ## Development
 

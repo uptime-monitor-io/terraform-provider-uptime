@@ -58,7 +58,7 @@ go fmt ./...
 golangci-lint run
 
 # Security scan
-trivy fs --security-checks vuln,config .
+gosec -quiet ./...
 ```
 
 ## Architecture Overview
