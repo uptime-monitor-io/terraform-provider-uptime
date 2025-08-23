@@ -15,7 +15,7 @@ jobs:
     name: Lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -36,7 +36,7 @@ jobs:
       matrix:
         terraform-version: ['1.5.7', '1.6.0', '1.7.0', '1.8.0', '1.9.0']
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -75,7 +75,7 @@ jobs:
           - os: windows
             arch: arm64
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -101,7 +101,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -127,7 +127,7 @@ jobs:
     name: Documentation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -153,7 +153,7 @@ jobs:
     name: Security Scan
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       
       - name: Run Trivy security scan
         uses: aquasecurity/trivy-action@master
