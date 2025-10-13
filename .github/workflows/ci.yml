@@ -172,7 +172,7 @@ jobs:
           echo "Note: Upload to GitHub Security may fail if Advanced Security is not enabled."
       
       - name: Upload Trivy results to GitHub Security
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         if: always()
         continue-on-error: true
         with:
